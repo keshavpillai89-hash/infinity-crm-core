@@ -1,0 +1,12 @@
+{
+  "name": "infinity-crm-core",
+  "version": "1.0.0",
+  "description": "Infinity Strategies 24/7 Scraping Hub",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

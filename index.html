@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinity Live Terminal Tracker</title>
+    <style>
+        :root {
+            --navy: #0F172A;
+            --slate: #1E293B;
+            --gold: #D97706;
+            --green: #10B981;
+            --purple: #7C3AED;
+            --text: #F8FAFC;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+        body { background: var(--navy); color: var(--text); padding: 15px; }
+        
+        .header { border-bottom: 2px solid var(--slate); padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 20px; color: var(--gold); }
+        
+        .sync-btn { background: transparent; border: 1px solid var(--gold); color: var(--gold); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .sync-btn:hover { background: var(--gold); color: var(--navy); }
+
+        .form-section { background: var(--slate); border-radius: 12px; padding: 15px; margin-bottom: 20px; border: 1px solid #334155; }
+        .form-section h3 { font-size: 14px; margin-bottom: 10px; text-transform: uppercase; color: var(--gold); }
+        .form-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+        @media(min-width: 600px) { .form-grid { grid-template-columns: repeat(3, 1fr); } .full-width { grid-column: span 3; } }
+        
+        .input-field { background: var(--navy); border: 1px solid #334155; padding: 10px; border-radius: 6px; color: white; font-size: 14px; width: 100%; }
+        .input-field:focus { border-color: var(--gold); outline: none; }
+        .submit-btn { background: var(--gold); color: white; font-weight: bold; padding: 12px; border: none; border-radius: 6px; cursor: pointer; text-transform: uppercase; margin-top: 10px; width: 100%; }
+
+        .lead-card { background: var(--slate); border-radius: 12px; padding: 15px; margin-bottom: 15px; border-left: 5px solid #475569; position: relative; }
+        .lead-card.ready { border-left-color: var(--green); }
+        .lead-card.outreach { border-left-color: var(--purple); }
+        
+        .badge { font-size: 10px; padding: 4px 8px; border-radius: 4px; font-weight: bold; text-transform: uppercase; float: right; }
+        .badge-ready { background: rgba(16, 185, 129, 0.2); color: var(--green); }
+        .badge-outreach { background: rgba(124, 58, 237, 0.2); color: #A78BFA; }
+        
+        .location { font-size: 12px; color: var(--gold); font-weight: bold; margin-bottom: 4px; }
+        .name { font-size: 16px; font-weight: bold; margin-bottom: 8px; }
+        .details { font-size: 14px; color: #CBD5E1; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 6px; margin-bottom: 12px; }
+        
+        .action-container { display: flex; gap: 10px; }
+        .action-btn { flex: 1; text-align: center; padding: 10px; border-radius: 6px; font-weight: bold; text-decoration: none; font-size: 14px; border: none; cursor: pointer; }
+        .btn-call { background: var(--green); color: white; }
+        .btn-status { background: #2D1B4E; color: #C0A9FF; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div>
+            <h1>Infinity Production Hub</h1>
+            <p style="font-size: 11px; color: #94A3B8;">Cross-Device Real Estate Pipeline</p>
+        </div>
+        <button class="sync-btn" onclick="fetchCloudLeads()">Sync Live Data</button>
+    </div>
+
+    <!-- Active Ingestion Section for Ground Entry -->
+    <div class="form-section">
+        <h3>Inject Fresh Lead Entry</h3>
+        <form id="lead-form" onsubmit="submitLeadToCloud(event)">
+            <div class="form-grid">
+                <input type="text" id="form-name" class="input-field" placeholder="Client / Prospect Name" required>
+                <input type="text" id="form-source" class="input-field" placeholder="Source Platform (e.g., WhatsApp, Field)" required>
+                <input type="text" id="form-location" class="input-field" placeholder="Micro-Market (e.g., Andheri West)" required>
+                <input type="text" id="form-detail" class="input-field full-width" placeholder="Enter requirements or raw copied text (with contact if available)" required>
+            </div>
+            <button type="submit" class="submit-btn">Send to Cloud Database</button>
+        </form>
+    </div>
+
+    <h2 style="font-size: 14px; text-transform: uppercase; color: #94A3B8; margin-bottom: 10px;" id="lead-counter">Active Data Pipeline: 0</h2>
+    
+    <div id="live-stream-container">Loading live cloud data stream...</div>
+
+    <script>
+        // Update this variable with your actual deployed Render URL string
+        const CLOUD_API_BASE = "https://infinity-crm-core.onrender.com";
+
+        async function fetchCloudLeads() {
+            try {
+                const response = await fetch(`${CLOUD_API_BASE}/api/leads`);
+                const leads = await response.json();
+                
+                const container = document.getElementById('live-stream-container');
+                document.getElementById('lead-counter').innerText = `Active Data Pipeline: ${leads.length}`;
+                container.innerHTML = '';
+
+                if (leads.length === 0) {
+                    container.innerHTML = '<p style="font-size: 14px; color: #94A3B8; text-align: center; padding: 20px;">No leads currently registered on the server.</p>';
+                    return;
+                }
+
+                leads.forEach(lead => {
+                    const hasContact = lead.contact !== "PENDING_AUTO_REACH" && lead.contact !== null;
+                    
+                    container.innerHTML += `
+                        <div class="lead-card ${hasContact ? 'ready' : 'outreach'}">
+                            <span class="badge ${hasContact ? 'badge-ready' : 'badge-outreach'}">
+                                ${hasContact ? 'Contact Ready' : 'Auto Dispatched'}
+                            </span>
+                            <div class="location">📍 ${lead.location}</div>
+                            <div class="name">${lead.name} <span style="font-size:11px; font-weight:normal; color:#94A3B8;">via ${lead.source}</span></div>
+                            <div class="details">"${lead.detail}"</div>
+                            <div class="action-container">
+                                ${hasContact ? 
+                                    `<a href="tel:${lead.contact}" class="action-btn btn-call">📞 Call Client Now (${lead.contact})</a>` : 
+                                    `<button class="action-btn btn-status" disabled>🤖 Auto Outreach Active on ${lead.source}</button>`
+                                }
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                document.getElementById('live-stream-container').innerHTML = `
+                    <p style="color: #EF4444; font-size: 13px; padding: 10px; border: 1px dashed #EF4444; border-radius: 6px;">
+                        ⚠️ Network connection failed. Verify that your cloud engine on Render is active.
+                    </p>`;
+            }
+        }
+
+        async function submitLeadToCloud(e) {
+            e.preventDefault();
+            
+            const payload = {
+                name: document.getElementById('form-name').value,
+                source: document.getElementById('form-source').value,
+                location: document.getElementById('form-location').value,
+                detail: document.getElementById('form-detail').value
+            };
+
+            try {
+                const response = await fetch(`${CLOUD_API_BASE}/api/ingest`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    document.getElementById('lead-form').reset();
+                    fetchCloudLeads(); // Refresh display instantly
+                } else {
+                    alert("Server rejected the formatting of the sent payload parameters.");
+                }
+            } catch (err) {
+                alert("Unable to transmit data packet to cloud storage system.");
+            }
+        }
+
+        // Poll database automatically every 12 seconds to keep multiple devices in sync
+        setInterval(fetchCloudLeads, 12000);
+        fetchCloudLeads();
+    </script>
+</body>
+</html>
